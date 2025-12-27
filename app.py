@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
-st.set_page_config(page_title="Career Decision Engine", layout="wide")
+st.set_page_config(page_title="Career Decision Engine", layout="wide", page_icon="🎯")
 st.title("🎯 Regret-Minimization Career Decision Engine")
 
 try:
@@ -12,6 +13,23 @@ try:
     from recommender import recommend
 
     st.success("✅ Modules loaded successfully")
+
+    # Animated intro
+    st.markdown(
+        """
+        <style>
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        .fade-in {
+            animation: fadeIn 2s ease-in;
+        }
+        </style>
+        <h3 class="fade-in">Answer honestly — your future self will thank you!</h3>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # Layout sliders in two columns
     col1, col2 = st.columns(2)
@@ -35,21 +53,38 @@ try:
             regret_data = calculate_regret(outcomes)
             results.append({"career": career, **regret_data})
 
-        # Convert to DataFrame for better visuals
         df = pd.DataFrame(results).sort_values("worst_regret")
-
         best = df.iloc[0]
 
         st.subheader("📊 Career Comparison")
-        st.dataframe(df, use_container_width=True)
 
-        # Add a bar chart for regret scores
-        st.bar_chart(df.set_index("career")["worst_regret"])
+        # Interactive animated bar chart
+        fig = px.bar(
+            df,
+            x="worst_regret",
+            y="career",
+            orientation="h",
+            color="worst_regret",
+            color_continuous_scale="turbo",
+            animation_frame=None,
+            title="Worst-Case Regret by Career",
+        )
+        fig.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(size=12),
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-        # Highlight recommendation
-        st.success(
-            f"🏆 Recommended Career: **{best['career']}** "
-            f"(Minimum Worst-Case Regret: {best['worst_regret']})"
+        # Highlight recommendation with animation
+        st.markdown(
+            f"""
+            <div style="padding:20px; border-radius:10px; background:linear-gradient(90deg,#00c6ff,#0072ff); color:white; animation: fadeIn 2s ease-in;">
+                🏆 <b>Recommended Career:</b> {best['career']}<br>
+                ✨ Minimum Worst-Case Regret: {best['worst_regret']}
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
 except Exception as e:
